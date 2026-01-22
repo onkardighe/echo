@@ -71,6 +71,11 @@ var PeerConnectionManager = class {
       }
     };
     try {
+      const microphonePermission = await navigator.permissions.query({ name: "microphone" });
+      if (microphonePermission.state === "denied") {
+        this.onError("ECHO : Microphone permission denied !");
+        console.error("ECHO ERROR : ", microphonePermission);
+      }
       this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
       this.localStream.getTracks().forEach((track) => {
         this.pc.addTrack(track, this.localStream);
@@ -141,7 +146,19 @@ function initPCM() {
     },
     (error) => {
       console.error(error);
-      alert("Error: " + error);
+      if (error.includes("Permission dismissed") || error.includes("Permission denied") || error.includes("Microphone permission denied")) {
+        statusEl.innerHTML = `
+                    Microphone access needed. 
+                    <button id="grant-perm-btn" style="background:#0e639c;color:white;border:none;padding:5px;cursor:pointer;">
+                        Grant Permission
+                    </button>
+                `;
+        document.getElementById("grant-perm-btn")?.addEventListener("click", () => {
+          chrome.tabs.create({ url: chrome.runtime.getURL("dist/permissions.html") });
+        });
+      } else {
+        alert("Error: " + error);
+      }
     }
   );
 }

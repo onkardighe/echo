@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Echo - Request Permission</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #1e1e1e;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+
+        button {
+            background-color: #0e639c;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #1177bb;
+        }
+
+        .success {
+            color: #4caf50;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Microphone Access Required</h1>
+    <p>Echo needs access to your microphone to make calls.</p>
+    <p>Please click the button below and "Allow" permission.</p>
+
+    <button id="request-btn">Grant Permission</button>
+
+    <div id="success-msg" class="success">
+        <h2>Permission Granted!</h2>
+        <p>You can now close this tab and use the extension.</p>
+    </div>
+
+    <script type="module" src="permissions.js"></script>
+</body>
+
+</html>

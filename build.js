@@ -24,7 +24,8 @@ const build = async () => {
     const ctx = await esbuild.context({
         entryPoints: [
             "src/background.ts",
-            "src/sidepanel.ts"
+            "src/sidepanel.ts",
+            "src/permissions.ts"
         ],
         bundle: true,
         outdir: "dist",
@@ -46,8 +47,14 @@ const build = async () => {
     // Copy HTML/CSS
     copyFile("src/sidepanel.html", "dist/sidepanel.html");
     copyFile("src/sidepanel.css", "dist/sidepanel.css");
-    // Copy Icons (Placeholder)
-    // fs.cpSync("icons", "dist/icons", { recursive: true });
+    copyFile("src/permissions.html", "dist/permissions.html");
+    // Copy Icons
+    ensureDir("dist/icons");
+    if (fs.existsSync("icons")) {
+        copyFile("icons/icon16.png", "dist/icons/icon16.png");
+        copyFile("icons/icon48.png", "dist/icons/icon48.png");
+        copyFile("icons/icon128.png", "dist/icons/icon128.png");
+    }
 };
 
 build().catch(() => process.exit(1));

@@ -46,9 +46,22 @@ function initPCM() {
                 updateUserList(false);
             }
         },
-        (error) => {
+        (error: string) => {
             console.error(error);
-            alert('Error: ' + error);
+            if (error.includes('Permission dismissed') || error.includes('Permission denied') || error.includes('Microphone permission denied')) {
+                // Show a manual permission button
+                statusEl.innerHTML = `
+                    Microphone access needed. 
+                    <button id="grant-perm-btn" style="background:#0e639c;color:white;border:none;padding:5px;cursor:pointer;">
+                        Grant Permission
+                    </button>
+                `;
+                document.getElementById('grant-perm-btn')?.addEventListener('click', () => {
+                    chrome.tabs.create({ url: chrome.runtime.getURL('dist/permissions.html') });
+                });
+            } else {
+                alert('Error: ' + error);
+            }
         }
     );
 }
