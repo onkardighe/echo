@@ -1,0 +1,23 @@
+{
+    "manifest_version": 3,
+    "name": "Echo - P2P Audio Calling",
+    "version": "1.0",
+    "description": "Peer-to-peer audio calling extension",
+    "icons": {
+        "16": "icons/icon16.png",
+        "48": "icons/icon48.png",
+        "128": "icons/icon128.png"
+    },
+    "action": {
+        "default_title": "Open Echo Side Panel"
+    },
+    "background": {
+        "service_worker": "dist/background.js"
+    },
+    "side_panel": {
+        "default_path": "sidepanel.html"
+    },
+    "permissions": [
+        "sidePanel"
+    ]
+}

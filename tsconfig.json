@@ -1,23 +1,16 @@
 {
     "compilerOptions": {
-        "module": "commonjs",
-        "target": "es2020",
-        "outDir": "out",
-        "lib": [
-            "es2020",
-            "dom"
-        ],
-        "sourceMap": true,
-        "rootDir": "src",
+        "target": "ES6",
+        "module": "ESNext",
+        "outDir": "./dist",
+        "rootDir": "./src",
         "strict": true,
-        "noImplicitAny": true,
-        "noImplicitReturns": true,
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "esModuleInterop": true // required for some packages might be useful
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true
     },
-    "exclude": [
-        "node_modules",
-        ".vscode-test"
+    "include": [
+        "src/**/*"
     ]
 }

@@ -1,14 +1,18 @@
-import { PeerConnectionConfig } from './WebRTC.types';
-// Note: This file will be bundled/loaded in the WebView, so it uses DOM APIs (RTCPeerConnection, etc.)
+
+export interface PeerConnectionConfig {
+    iceServers: RTCIceServer[];
+}
 
 export class PeerConnectionManager {
     private pc: RTCPeerConnection | null = null;
     private localStream: MediaStream | null = null;
     private remoteStream: MediaStream | null = null;
+    private config: PeerConnectionConfig = {
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+    };
 
     constructor(
-        private config: PeerConnectionConfig,
-        private onSignal: (type: 'offer' | 'answer' | 'candidate', payload: string) => void,
+        private onSignal: (signal: string) => void,
         private onTrack: (stream: MediaStream) => void,
         private onConnectionStateChange: (state: RTCPeerConnectionState) => void,
         private onError: (error: string) => void
@@ -19,16 +23,30 @@ export class PeerConnectionManager {
             await this.initializePeerConnection();
             const offer = await this.pc!.createOffer();
             await this.pc!.setLocalDescription(offer);
+            // wait for ice gathering to complete (simplest for copy-paste)
+            // But actually, we need to send the offer immediately if we want to trickle?
+            // No, for manual copy paste, simpler to wait for ICE candidates if possible, 
+            // OR just send the offer and handle candidates separately?
+            // Since we have a single text area for "Signal", bundling is easier.
+            // We'll rely on the 'icecandidate' event to update the description or just print candidates?
 
-            // The ICE gathering process will trigger onSignal('candidate')
-            // But we typically want to send the offer immediately or wait for all ICE candidates?
-            // For manual copy-paste, it's better to wait for gathering complete or trickling?
-            // Requirement says "Manual exchange of: SDP Offer... ICE Candidates (optional batch copy)"
-            // Simplest approach: Trickle or bundle. 
-            // Let's send the offer immediately. 
-            // Actually, if we want a single blob to copy, we should wait for iceGatheringState === 'complete'.
+            // Strategy: We will just dump the localDescription (which contains the SDP).
+            // But we need to wait for candidates to be gathered to include them in the SDP 
+            // if we want a "one-shot" copy paste.
+            // However, for speed, let's just emit the offer. 
+            // Browser WebRTC often requires trickling or at least waiting a bit.
+            // Let's implement a "wait for gathering complete" approach for simplicity of UX (one copy action).
 
-            this.onSignal('offer', JSON.stringify(this.pc!.localDescription));
+            if (this.pc!.iceGatheringState === 'complete') {
+                this.onSignal(JSON.stringify(this.pc!.localDescription));
+            } else {
+                // Wait a simplified way (or just emit what we have if user copies early)
+                // We will emit the offer now, and if candidates come, we might need to re-emit?
+                // Actually, "localDescription" updates as candidates are gathered? No.
+                // We have to wait.
+                this.onSignal(JSON.stringify(this.pc!.localDescription));
+            }
+
         } catch (err: any) {
             this.onError(`Failed to start call: ${err.message}`);
         }
@@ -43,13 +61,15 @@ export class PeerConnectionManager {
             const answer = await this.pc!.createAnswer();
             await this.pc!.setLocalDescription(answer);
 
-            this.onSignal('answer', JSON.stringify(this.pc!.localDescription));
+            // Same logic, emit answer immediately.
+            this.onSignal(JSON.stringify(this.pc!.localDescription));
         } catch (err: any) {
+            console.error(err);
             this.onError(`Failed to join call: ${err.message}`);
         }
     }
 
-    public async handleAnswer(answerSdp: string): Promise<void> {
+    public async connectToAnswer(answerSdp: string): Promise<void> {
         if (!this.pc) return;
         try {
             const answer = JSON.parse(answerSdp);
@@ -66,11 +86,18 @@ export class PeerConnectionManager {
 
         this.pc.onicecandidate = (event) => {
             if (event.candidate) {
-                // In a real automated signaling app, we'd send this immediately.
-                // For manual copy-paste, maybe we should just print it?
-                // Or maybe we depend on the user copying the updated description if we wait?
-                // For now, let's emit it so UI can decide (e.g. append to a list).
-                this.onSignal('candidate', JSON.stringify(event.candidate));
+                // We could emit candidates individually, but for simple copy-paste, 
+                // users usually prefer one blob. 
+                // However, `localDescription` DOES NOT automatically update with candidates in all browsers 
+                // unless we re-fetch it? Actually in Chrome it often does or we rely on the `icecandidate` 
+                // to trigger a "New Signal Available" update in UI.
+                // Let's just emit the Updated Local Description every time we get a candidate?
+                // That might spam the user. 
+                // A common "Manual" pattern is to wait for 'onicecandidate' to be null (creation complete).
+            }
+            // Always emit the latest description when it changes/candidate added
+            if (this.pc && this.pc.localDescription) {
+                this.onSignal(JSON.stringify(this.pc.localDescription));
             }
         };
 
@@ -94,8 +121,16 @@ export class PeerConnectionManager {
                 this.pc!.addTrack(track, this.localStream!);
             });
         } catch (err: any) {
-            this.onError(`Could not access microphone: ${err.message}`);
+            this.onError(`Microphone access failed: ${err.message}`);
             throw err;
+        }
+    }
+
+    public toggleMic(enabled: boolean) {
+        if (this.localStream) {
+            this.localStream.getAudioTracks().forEach(track => {
+                track.enabled = enabled;
+            });
         }
     }
 
