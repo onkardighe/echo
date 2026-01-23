@@ -10,7 +10,7 @@ export class SignalingClient {
     private baseUrl: string;
     private authToken: string | null = null;
 
-    constructor(baseUrl: string = 'http://localhost:3000/api') {
+    constructor(baseUrl: string = (process.env.API_BASE_URL || 'http://localhost:3000') + '/api') {
         this.baseUrl = baseUrl;
     }
 

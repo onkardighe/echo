@@ -1,13 +1,14 @@
 {
-    "name": "echo-browser-extension",
+    "name": "echo",
     "version": "1.0.0",
-    "description": "Browser extension for Echo P2P calling",
+    "description": "Browser extension for secure, password-protected audio rooms with real-time audio",
     "scripts": {
         "build": "node build.js",
         "watch": "node build.js --watch"
     },
     "devDependencies": {
         "@types/chrome": "^0.0.258",
+        "dotenv": "^17.2.3",
         "esbuild": "^0.19.11",
         "typescript": "^5.3.3"
     },

@@ -6,7 +6,12 @@ const logger = require('./utils/logger');
 const app = express();
 
 // Middleware
-app.use(cors());
+const allowedOrigins = process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',')
+    : '*';
+app.use(cors({
+    origin: allowedOrigins
+}));
 app.use(express.json());
 
 // Logging middleware

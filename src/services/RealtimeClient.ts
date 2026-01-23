@@ -30,7 +30,7 @@ export class RealtimeClient {
     private currentToken: string | null = null;
     private displayName: string = 'User';
 
-    constructor(serverUrl: string = 'http://localhost:3000') {
+    constructor(serverUrl: string = process.env.API_BASE_URL || 'http://localhost:3000') {
         this.serverUrl = serverUrl;
     }
 

@@ -28,3 +28,10 @@ coverage/
 
 # OS-generated files
 Thumbs.db
+
+# Environment Variables
+.env
+.env.production
+.env.development
+.env.local
+!.env.example

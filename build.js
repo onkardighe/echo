@@ -20,8 +20,35 @@ const build = async () => {
     ensureDir("dist");
     ensureDir("dist/icons");
 
+    // Load environment variables
+    const loadEnv = (path) => {
+        if (fs.existsSync(path)) {
+            const content = fs.readFileSync(path, 'utf-8');
+            return content.split('\n').reduce((acc, line) => {
+                const [key, val] = line.split('=');
+                if (key && val) acc[key.trim()] = val.trim();
+                return acc;
+            }, {});
+        }
+        return {};
+    };
+
+    const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
+    const envConfig = { ...loadEnv('.env'), ...loadEnv(envFile) };
+
+    // Default fallback
+    if (!envConfig.API_BASE_URL) envConfig.API_BASE_URL = 'http://localhost:3000';
+
+    const define = {
+        'process.env.API_BASE_URL': JSON.stringify(envConfig.API_BASE_URL),
+        'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')
+    };
+
+    console.log(`Building with API_BASE_URL: ${envConfig.API_BASE_URL}`);
+
     // Build TypeScript
     const ctx = await esbuild.context({
+        define,
         entryPoints: [
             "src/background.ts",
             "src/sidepanel.ts",
@@ -30,8 +57,8 @@ const build = async () => {
         bundle: true,
         outdir: "dist",
         target: "chrome115",
-        sourcemap: true,
-        minify: false,
+        sourcemap: process.env.NODE_ENV !== 'production', // Disable sourcemap in prod
+        minify: process.env.NODE_ENV === 'production',
         format: "esm",
     });
 
@@ -43,6 +70,7 @@ const build = async () => {
         await ctx.dispose();
         console.log("Build complete.");
     }
+    copyFile("src/manifest.json", "dist/manifest.json");
 
     // Copy HTML/CSS
     copyFile("src/sidepanel.html", "dist/sidepanel.html");
