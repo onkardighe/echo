@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../src/background.ts"],
-  "sourcesContent": ["// background.ts\r\n\r\n// Allows users to open the side panel by clicking the action toolbar icon\r\nchrome.sidePanel\r\n    .setPanelBehavior({ openPanelOnActionClick: true })\r\n    .catch((error) => console.error(error));\r\n\r\nchrome.runtime.onInstalled.addListener(() => {\r\n    console.log('Echo extension installed');\r\n});\r\n"],
-  "mappings": ";AAGA,OAAO,UACF,iBAAiB,EAAE,wBAAwB,KAAK,CAAC,EACjD,MAAM,CAAC,UAAU,QAAQ,MAAM,KAAK,CAAC;AAE1C,OAAO,QAAQ,YAAY,YAAY,MAAM;AACzC,UAAQ,IAAI,0BAA0B;AAC1C,CAAC;",
-  "names": []
-}
