@@ -12,7 +12,8 @@ export class PeerConnectionManager {
     };
 
     constructor(
-        private onSignal: (signal: string) => void,
+        private onLocalDescription: (desc: RTCSessionDescriptionInit) => void,
+        private onLocalCandidate: (candidate: RTCIceCandidate) => void,
         private onTrack: (stream: MediaStream) => void,
         private onConnectionStateChange: (state: RTCPeerConnectionState) => void,
         private onError: (error: string) => void
@@ -23,59 +24,47 @@ export class PeerConnectionManager {
             await this.initializePeerConnection();
             const offer = await this.pc!.createOffer();
             await this.pc!.setLocalDescription(offer);
-            // wait for ice gathering to complete (simplest for copy-paste)
-            // But actually, we need to send the offer immediately if we want to trickle?
-            // No, for manual copy paste, simpler to wait for ICE candidates if possible, 
-            // OR just send the offer and handle candidates separately?
-            // Since we have a single text area for "Signal", bundling is easier.
-            // We'll rely on the 'icecandidate' event to update the description or just print candidates?
 
-            // Strategy: We will just dump the localDescription (which contains the SDP).
-            // But we need to wait for candidates to be gathered to include them in the SDP 
-            // if we want a "one-shot" copy paste.
-            // However, for speed, let's just emit the offer. 
-            // Browser WebRTC often requires trickling or at least waiting a bit.
-            // Let's implement a "wait for gathering complete" approach for simplicity of UX (one copy action).
-
-            if (this.pc!.iceGatheringState === 'complete') {
-                this.onSignal(JSON.stringify(this.pc!.localDescription));
-            } else {
-                // Wait a simplified way (or just emit what we have if user copies early)
-                // We will emit the offer now, and if candidates come, we might need to re-emit?
-                // Actually, "localDescription" updates as candidates are gathered? No.
-                // We have to wait.
-                this.onSignal(JSON.stringify(this.pc!.localDescription));
+            if (this.pc!.localDescription) {
+                this.onLocalDescription(this.pc!.localDescription);
             }
-
         } catch (err: any) {
             this.onError(`Failed to start call: ${err.message}`);
         }
     }
 
-    public async joinCall(offerSdp: string): Promise<void> {
+    public async joinCall(offerSdp: RTCSessionDescriptionInit): Promise<void> {
         try {
             await this.initializePeerConnection();
-            const offer = JSON.parse(offerSdp);
-            await this.pc!.setRemoteDescription(offer);
+            await this.pc!.setRemoteDescription(offerSdp);
 
             const answer = await this.pc!.createAnswer();
             await this.pc!.setLocalDescription(answer);
 
-            // Same logic, emit answer immediately.
-            this.onSignal(JSON.stringify(this.pc!.localDescription));
+            if (this.pc!.localDescription) {
+                this.onLocalDescription(this.pc!.localDescription);
+            }
         } catch (err: any) {
             console.error(err);
             this.onError(`Failed to join call: ${err.message}`);
         }
     }
 
-    public async connectToAnswer(answerSdp: string): Promise<void> {
+    public async connectToAnswer(answerSdp: RTCSessionDescriptionInit): Promise<void> {
         if (!this.pc) return;
         try {
-            const answer = JSON.parse(answerSdp);
-            await this.pc.setRemoteDescription(answer);
+            await this.pc.setRemoteDescription(answerSdp);
         } catch (err: any) {
             this.onError(`Failed to handle answer: ${err.message}`);
+        }
+    }
+
+    public async addRemoteCandidate(candidate: RTCIceCandidateInit) {
+        if (!this.pc) return;
+        try {
+            await this.pc.addIceCandidate(candidate);
+        } catch (err: any) {
+            console.warn(`Failed to add remote candidate: ${err.message}`);
         }
     }
 
@@ -86,18 +75,7 @@ export class PeerConnectionManager {
 
         this.pc.onicecandidate = (event) => {
             if (event.candidate) {
-                // We could emit candidates individually, but for simple copy-paste, 
-                // users usually prefer one blob. 
-                // However, `localDescription` DOES NOT automatically update with candidates in all browsers 
-                // unless we re-fetch it? Actually in Chrome it often does or we rely on the `icecandidate` 
-                // to trigger a "New Signal Available" update in UI.
-                // Let's just emit the Updated Local Description every time we get a candidate?
-                // That might spam the user. 
-                // A common "Manual" pattern is to wait for 'onicecandidate' to be null (creation complete).
-            }
-            // Always emit the latest description when it changes/candidate added
-            if (this.pc && this.pc.localDescription) {
-                this.onSignal(JSON.stringify(this.pc.localDescription));
+                this.onLocalCandidate(event.candidate);
             }
         };
 
@@ -116,13 +94,13 @@ export class PeerConnectionManager {
 
         // Get Local Audio
         try {
-            const microphonePermission = await navigator.permissions.query({name : "microphone"});
+            const microphonePermission = await navigator.permissions.query({ name: "microphone" as PermissionName });
 
-            if(microphonePermission.state === "denied"){
+            if (microphonePermission.state === "denied") {
                 this.onError("ECHO : Microphone permission denied !")
                 console.error("ECHO ERROR : ", microphonePermission);
             }
-            
+
 
             this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
             this.localStream.getTracks().forEach(track => {
