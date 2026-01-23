@@ -15,7 +15,8 @@ const logger = require('../utils/logger');
 //     lastActive: number,
 //     offer: Object | null,
 //     answer: Object | null,
-//     candidates: Array<{ type: 'offer' | 'answer', candidate: Object }>
+//     candidates: Array<{ type: 'offer' | 'answer', candidate: Object }>,
+//     participants: Map<socketId, { displayName, isMuted, isSpeaking, joinedAt }>
 //   }
 // }
 const rooms = {};
@@ -41,7 +42,8 @@ const roomService = {
             lastActive: Date.now(),
             offer: null,
             answer: null,
-            candidates: []
+            candidates: [],
+            participants: new Map()
         };
 
         logger.info(`Room created: ${roomId} ("${name}")`);
@@ -53,7 +55,7 @@ const roomService = {
             id: room.id,
             name: room.name,
             createdAt: room.createdAt,
-            // Don't expose passwords or tokens
+            participantCount: room.participants ? room.participants.size : 0
         })).sort((a, b) => b.createdAt - a.createdAt);
     },
 
@@ -118,6 +120,87 @@ const roomService = {
         return room.candidates;
     },
 
+    // === Participant Management ===
+
+    /**
+     * Add a participant to a room
+     * @param {string} roomId 
+     * @param {string} socketId 
+     * @param {Object} data - { displayName, isMuted, isSpeaking }
+     * @returns {Object|null} The participant object or null
+     */
+    addParticipant: (roomId, socketId, data) => {
+        const room = rooms[roomId];
+        if (!room) return null;
+
+        const participant = {
+            odId: socketId,
+            displayName: data.displayName || 'User',
+            isMuted: data.isMuted || false,
+            isSpeaking: data.isSpeaking || false,
+            joinedAt: Date.now()
+        };
+
+        room.participants.set(socketId, participant);
+        room.lastActive = Date.now();
+        logger.info(`Participant added to room ${roomId}: ${socketId}`);
+        return participant;
+    },
+
+    /**
+     * Remove a participant from a room
+     * @param {string} roomId 
+     * @param {string} socketId 
+     * @returns {boolean}
+     */
+    removeParticipant: (roomId, socketId) => {
+        const room = rooms[roomId];
+        if (!room) return false;
+
+        const deleted = room.participants.delete(socketId);
+        if (deleted) {
+            room.lastActive = Date.now();
+            logger.info(`Participant removed from room ${roomId}: ${socketId}`);
+        }
+        return deleted;
+    },
+
+    /**
+     * Update participant state (mic, speaking)
+     * @param {string} roomId 
+     * @param {string} socketId 
+     * @param {Object} updates - { isMuted?, isSpeaking? }
+     * @returns {boolean}
+     */
+    updateParticipantState: (roomId, socketId, updates) => {
+        const room = rooms[roomId];
+        if (!room) return false;
+
+        const participant = room.participants.get(socketId);
+        if (!participant) return false;
+
+        if (typeof updates.isMuted === 'boolean') {
+            participant.isMuted = updates.isMuted;
+        }
+        if (typeof updates.isSpeaking === 'boolean') {
+            participant.isSpeaking = updates.isSpeaking;
+        }
+
+        room.lastActive = Date.now();
+        return true;
+    },
+
+    /**
+     * Get all participants in a room
+     * @param {string} roomId 
+     * @returns {Array}
+     */
+    getParticipants: (roomId) => {
+        const room = rooms[roomId];
+        if (!room) return [];
+        return Array.from(room.participants.values());
+    },
+
     cleanupRooms: () => {
         const now = Date.now();
         let cleaned = 0;
@@ -137,3 +220,4 @@ const roomService = {
 setInterval(() => roomService.cleanupRooms(), CLEANUP_INTERVAL);
 
 module.exports = roomService;
+
