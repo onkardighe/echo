@@ -48,26 +48,42 @@ function initPCM() {
         },
         (error: string) => {
             console.error(error);
-            if (error.includes('Permission dismissed') || error.includes('Permission denied') || error.includes('Microphone permission denied')) {
-                // Show a manual permission button
-                statusEl.innerHTML = `
-                    Microphone access needed. 
-                    <button id="grant-perm-btn" style="background:#0e639c;color:white;border:none;padding:5px;cursor:pointer;">
-                        Grant Permission
-                    </button>
-                `;
-                document.getElementById('grant-perm-btn')?.addEventListener('click', () => {
-                    chrome.tabs.create({ url: chrome.runtime.getURL('dist/permissions.html') });
-                });
-            } else {
-                alert('Error: ' + error);
-            }
+            alert('Error: ' + error);
         }
     );
 }
 
+function requestMicrophonePermission(): Promise<boolean> {
+    return new Promise(async (resolve) => {
+        try {
+            // Try to acquire mic — this is the ONLY real check
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+            // Stop immediately
+            stream.getTracks().forEach(t => t.stop());
+
+            resolve(true);
+        } catch (err) {
+            console.warn("Mic not granted yet");
+
+            // Open permission tab ONLY if not already granted
+            chrome.tabs.create({ url: chrome.runtime.getURL("dist/permissions.html") });
+            resolve(false);
+        }
+    });
+}
+
+
+
 // Event Listeners
 startBtn.addEventListener('click', async () => {
+    const granted = await requestMicrophonePermission();
+
+    if (!granted) {
+        console.error("Microphone permission not granted !");
+        return;
+    }
+
     initPCM();
     signalingArea.classList.remove('hidden');
     await pcm?.startCall();

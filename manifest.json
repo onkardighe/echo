@@ -18,6 +18,7 @@
         "default_path": "dist/sidepanel.html"
     },
     "permissions": [
-        "sidePanel"
+        "sidePanel",
+        "tabs"
     ]
 }
