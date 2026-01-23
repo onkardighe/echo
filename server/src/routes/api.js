@@ -2,8 +2,10 @@ const express = require('express');
 const router = express.Router();
 const roomController = require('../controllers/roomController');
 
-// Room creation
+// Room management
+router.get('/rooms', roomController.listRooms);
 router.post('/rooms', roomController.createRoom);
+router.post('/rooms/:roomId/join', roomController.joinRoom);
 
 // Signaling - Offer
 router.post('/rooms/:roomId/offer', roomController.postOffer);

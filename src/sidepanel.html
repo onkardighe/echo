@@ -18,17 +18,41 @@
                 <button id="join-call-btn" class="secondary-btn">Join Echo</button>
             </div>
 
-            <div id="signaling-area" class="hidden">
+            <!-- Host Flow: Create Room -->
+            <div id="create-room-area" class="hidden">
                 <div class="step-group">
-                    <label>1. Your Signal (Copy this):</label>
-                    <textarea id="local-signal" readonly></textarea>
-                    <button id="copy-signal-btn">Copy</button>
+                    <label>Room Name:</label>
+                    <input type="text" id="room-name-input" placeholder="My Room" />
                 </div>
-
                 <div class="step-group">
-                    <label>2. Remote Signal (Paste here):</label>
-                    <textarea id="remote-signal" placeholder="Paste signal from other user..."></textarea>
-                    <button id="connect-btn">Connect</button>
+                    <label>Room Password:</label>
+                    <input type="password" id="room-password-input" placeholder="Enter password" />
+                </div>
+                <button id="create-room-btn" class="primary-btn">Create Room</button>
+            </div>
+
+            <!-- Guest Flow: Room List -->
+            <div id="room-list-area" class="hidden">
+                <div class="step-group">
+                    <label>Active Rooms:</label>
+                    <button id="refresh-rooms-btn" class="icon-btn" title="Refresh">🔄</button>
+                </div>
+                <div id="rooms-list">
+                    <!-- Rooms will be dynamically added here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Password Modal -->
+        <div id="password-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3>Enter Room Password</h3>
+                <p id="modal-room-name"></p>
+                <input type="password" id="modal-password-input" placeholder="Password" />
+                <div id="modal-error" class="error-text hidden"></div>
+                <div class="modal-actions">
+                    <button id="modal-cancel-btn" class="secondary-btn">Cancel</button>
+                    <button id="modal-join-btn" class="primary-btn">Join</button>
                 </div>
             </div>
         </div>

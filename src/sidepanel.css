@@ -137,3 +137,110 @@ textarea:focus {
     border-top: 1px solid #333;
     padding-top: 20px;
 }
+
+/* Input fields */
+input[type="text"],
+input[type="password"] {
+    width: 100%;
+    background-color: #3c3c3c;
+    border: 1px solid #3c3c3c;
+    color: #e0e0e0;
+    border-radius: 4px;
+    padding: 10px;
+    box-sizing: border-box;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+    outline: 1px solid #0e639c;
+}
+
+/* Room List */
+#rooms-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.room-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #2d2d2d;
+    padding: 10px 12px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.room-item:hover {
+    background-color: #3c3c3c;
+}
+
+.room-item .room-name {
+    font-weight: 500;
+}
+
+.room-item .room-time {
+    font-size: 11px;
+    color: #888;
+}
+
+.empty-list {
+    color: #777;
+    font-style: italic;
+    padding: 10px;
+    text-align: center;
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.modal-content {
+    background-color: #252526;
+    padding: 20px;
+    border-radius: 8px;
+    width: 280px;
+    max-width: 90%;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.modal-content p {
+    color: #aaa;
+    margin-bottom: 15px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 15px;
+}
+
+.error-text {
+    color: #f44336;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
