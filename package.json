@@ -4,6 +4,7 @@
     "description": "Browser extension for secure, password-protected audio rooms with real-time audio",
     "scripts": {
         "build": "node build.js",
+        "build:production": "set NODE_ENV=production&& npm run build",
         "watch": "node build.js --watch"
     },
     "devDependencies": {

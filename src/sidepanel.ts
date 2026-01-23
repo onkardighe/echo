@@ -149,7 +149,7 @@ function requestMicrophonePermission(): Promise<boolean> {
             resolve(true);
         } catch (err) {
             console.warn("Mic not granted yet");
-            chrome.tabs.create({ url: chrome.runtime.getURL("dist/permissions.html") });
+            chrome.tabs.create({ url: chrome.runtime.getURL("./permissions.html") });
             resolve(false);
         }
     });
