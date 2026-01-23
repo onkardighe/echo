@@ -118,9 +118,9 @@ connectBtn.addEventListener('click', async () => {
     }
 });
 
-copySignalBtn.addEventListener('click', () => {
+copySignalBtn.addEventListener('click', async() => {
     localSignalArea.select();
-    document.execCommand('copy');
+    await navigator.clipboard.writeText(localSignalArea.value);
     copySignalBtn.innerText = 'Copied!';
     setTimeout(() => copySignalBtn.innerText = 'Copy', 2000);
 });
